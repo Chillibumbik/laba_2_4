@@ -18,7 +18,8 @@ enum class ErrorCode {
     UNKNOWN_ORDER,
     DESERIALIZE_FAILED,
     INDEX_OUT_OF_RANGE,
-    INVALID_ARGUMENT
+    INVALID_ARGUMENT,
+    CONCAT_ERROR
 
 };
 
@@ -30,7 +31,8 @@ inline std::vector<Error> ErrorsList = {
     {4, "Unknown traversal order"},
     {5, "Failed to deserialize tree from string"},
     {6, "Index out of range"},
-    {7, "Invalid argument"}
+    {7, "Invalid argument"},
+    {8, "Cannot merge trees of different types"}
 };
 
 namespace Errors {
@@ -88,5 +90,9 @@ namespace Errors {
             return std::invalid_argument(ErrorsList[static_cast<int>(ErrorCode::INVALID_ARGUMENT)].message);
         else
             return std::invalid_argument(ErrorsList[static_cast<int>(ErrorCode::INVALID_ARGUMENT)].message + ": " + message);
+    }
+
+    inline std::invalid_argument ConcatTypeMismatchError(){
+        return std::invalid_argument(ErrorsList[static_cast<int>(ErrorCode::CONCAT_ERROR)].message);
     }
 }

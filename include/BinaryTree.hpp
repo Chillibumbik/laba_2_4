@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include <stdexcept>
+#include "Errors.hpp"
 
 template<typename T>
 class BinaryTree {
@@ -29,6 +30,9 @@ private:
     Node* getMaxNode(Node* node) const;
 
     void traverse(Node* node, const std::string& order, std::function<void(const T&)> func) const;
+    void traverse(std::function<void(int, const T&)> func) const;
+    void traverse(Node* node, std::function<void(int, const T&)> func) const;
+
     void serialize(Node* node, const std::string& order, std::ostringstream& out) const;
     Node* deserialize(std::istringstream& in, const std::string& order);
 
@@ -69,15 +73,13 @@ public:
     T* findByRelativePath(const std::string& path, const T& from) const;
 };
 
-// ===================== Реализация ==========================
+
 
 template<typename T>
 BinaryTree<T>::BinaryTree() : root(nullptr), size(0) {}
 
 template<typename T>
-BinaryTree<T>::BinaryTree(const BinaryTree<T>& other) : root(nullptr), size(0) {
-    root = copy(other.root);
-}
+BinaryTree<T>::BinaryTree(const BinaryTree<T>& other) : root(copy(other.root)), size(other.size) {}
 
 template<typename T>
 BinaryTree<T>::~BinaryTree() {
@@ -126,27 +128,29 @@ T* BinaryTree<T>::search(int key) const {
 
 template<typename T>
 typename BinaryTree<T>::Node* BinaryTree<T>::getMinNode(Node* node) const {
-    while (node && node->left) node = node->left;
+    if (!node) return nullptr;
+    while (node->left) node = node->left;
     return node;
 }
 
 template<typename T>
 typename BinaryTree<T>::Node* BinaryTree<T>::getMaxNode(Node* node) const {
-    while (node && node->right) node = node->right;
+    if (!node) return nullptr;
+    while (node->right) node = node->right;
     return node;
 }
 
 template<typename T>
 T BinaryTree<T>::getMin() const {
     Node* min = getMinNode(root);
-    if (!min) throw std::runtime_error("Tree is empty");
+    if (!min) throw Errors::TreeEmpty();
     return min->value;
 }
 
 template<typename T>
 T BinaryTree<T>::getMax() const {
     Node* max = getMaxNode(root);
-    if (!max) throw std::runtime_error("Tree is empty");
+    if (!max) throw Errors::TreeEmpty();
     return max->value;
 }
 
@@ -194,20 +198,29 @@ void BinaryTree<T>::traverse(Node* node, const std::string& order, std::function
     else if (order == "LKP") { traverse(node->left, order, func); func(node->value); traverse(node->right, order, func); }
     else if (order == "PLK") { traverse(node->right, order, func); traverse(node->left, order, func); func(node->value); }
     else if (order == "PKL") { traverse(node->right, order, func); func(node->value); traverse(node->left, order, func); }
+    else throw Errors::UnknownOrder(order);
 }
 
 template<typename T>
-void BinaryTree<T>::traverseKLP(std::function<void(const T&)> func) const { traverse(root, "KLP", func); }
+void BinaryTree<T>::traverse(std::function<void(int, const T&)> func) const {
+    traverse(root, func);
+}
+
 template<typename T>
-void BinaryTree<T>::traverseKPL(std::function<void(const T&)> func) const { traverse(root, "KPL", func); }
-template<typename T>
-void BinaryTree<T>::traverseLPK(std::function<void(const T&)> func) const { traverse(root, "LPK", func); }
-template<typename T>
-void BinaryTree<T>::traverseLKP(std::function<void(const T&)> func) const { traverse(root, "LKP", func); }
-template<typename T>
-void BinaryTree<T>::traversePLK(std::function<void(const T&)> func) const { traverse(root, "PLK", func); }
-template<typename T>
-void BinaryTree<T>::traversePKL(std::function<void(const T&)> func) const { traverse(root, "PKL", func); }
+void BinaryTree<T>::traverse(Node* node, std::function<void(int, const T&)> func) const {
+    if (!node) return;
+    func(node->key, node->value);
+    traverse(node->left, func);
+    traverse(node->right, func);
+}
+
+
+template<typename T> void BinaryTree<T>::traverseKLP(std::function<void(const T&)> func) const { traverse(root, "KLP", func); }
+template<typename T> void BinaryTree<T>::traverseKPL(std::function<void(const T&)> func) const { traverse(root, "KPL", func); }
+template<typename T> void BinaryTree<T>::traverseLPK(std::function<void(const T&)> func) const { traverse(root, "LPK", func); }
+template<typename T> void BinaryTree<T>::traverseLKP(std::function<void(const T&)> func) const { traverse(root, "LKP", func); }
+template<typename T> void BinaryTree<T>::traversePLK(std::function<void(const T&)> func) const { traverse(root, "PLK", func); }
+template<typename T> void BinaryTree<T>::traversePKL(std::function<void(const T&)> func) const { traverse(root, "PKL", func); }
 
 template<typename T>
 BinaryTree<T> BinaryTree<T>::map(std::function<T(const T&)> f) const {
@@ -227,12 +240,16 @@ BinaryTree<T> BinaryTree<T>::where(std::function<bool(const T&)> p) const {
 
 template<typename T>
 BinaryTree<T> BinaryTree<T>::merge(const BinaryTree<T>& other) const {
-    BinaryTree<T> result = *this;
-    other.traverseKLP([&](const T& val) {
-        result.insert(val, val);
+    BinaryTree<T> result;
+    traverse([&result](int key, const T& val) {
+        result.insert(key, val);
+    });
+    other.traverse([&result](int key, const T& val) {
+        result.insert(key, val);
     });
     return result;
 }
+
 
 template<typename T>
 typename BinaryTree<T>::Node* BinaryTree<T>::copy(Node* node) const {
@@ -246,7 +263,7 @@ typename BinaryTree<T>::Node* BinaryTree<T>::copy(Node* node) const {
 template<typename T>
 BinaryTree<T> BinaryTree<T>::extractSubtree(int key) const {
     Node* found = search(root, key);
-    if (!found) throw std::runtime_error("Key not found");
+    if (!found) throw Errors::KeyNotFound();
     BinaryTree<T> result;
     result.root = copy(found);
     return result;
@@ -297,8 +314,9 @@ void BinaryTree<T>::serialize(Node* node, const std::string& order, std::ostring
         out << node->value << " ";
         serialize(node->left, order, out);
         serialize(node->right, order, out);
+    } else {
+        throw Errors::UnknownOrder(order);
     }
-    // add other orders if needed
 }
 
 template<typename T>
@@ -336,6 +354,7 @@ T* BinaryTree<T>::findByPath(const std::string& path) const {
         if (!node) return nullptr;
         if (c == 'L') node = node->left;
         else if (c == 'P') node = node->right;
+        else throw Errors::InvalidPath();
     }
     return node ? &node->value : nullptr;
 }
@@ -348,6 +367,7 @@ T* BinaryTree<T>::findByRelativePath(const std::string& path, const T& from) con
         if (!node) return nullptr;
         if (c == 'L') node = node->left;
         else if (c == 'P') node = node->right;
+        else throw Errors::InvalidPath();
     }
     return node ? &node->value : nullptr;
 }
