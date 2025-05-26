@@ -66,9 +66,10 @@ std::function<double(double)> GetTyped<std::function<double(double)>>(const std:
     throw Errors::InvalidArgument("Invalid function selection");
 }
 
-// базовый интерфейс для обёрток деревьев
 struct ITreeWrapper {
     virtual ~ITreeWrapper() = default;
+    virtual std::string TypeName() const = 0;
+    virtual void Menu(std::vector<ITreeWrapper*>&, std::vector<std::string>&) = 0;
 };
 
 template<typename T>
@@ -79,16 +80,14 @@ public:
 
     TreeWrapper(std::string typeName_) : typeName(std::move(typeName_)) {}
 
-    void Menu(std::vector<ITreeWrapper*>& globalTrees, std::vector<std::string>& typeRegistry) {
+    std::string TypeName() const override { return typeName; }
+
+    void Menu(std::vector<ITreeWrapper*>& globalTrees, std::vector<std::string>& typeRegistry) override {
         while (true) {
             std::cout << "\n--- Tree Menu (" << typeName << ") ---\n"
                       << "1. Insert\n2. Search\n3. Min\n4. Max\n5. Remove\n"
                       << "6. Traverse (KLP)\n7. Merge with another\n8. Extract Subtree\n9. Back\n"
-                      << "Available tree indices: ";
-            for (size_t i = 0; i < globalTrees.size(); ++i)
-                std::cout << i << " ";
-            std::cout << "\nChoose: ";
-
+                      << "Choose: ";
             try {
                 int ch = GetInt();
                 switch (ch) {
@@ -134,6 +133,10 @@ public:
                         break;
                     }
                     case 7: {
+                        std::cout << "Available tree indices: ";
+                        for (size_t i = 0; i < globalTrees.size(); ++i)
+                            std::cout << i << " ";
+                        std::cout << "\n";
                         int idx = GetInt("Index of tree to merge with: ");
                         if (idx < 0 || static_cast<size_t>(idx) >= globalTrees.size()) throw Errors::IndexOutOfRange();
                         auto* other = dynamic_cast<TreeWrapper<T>*>(globalTrees[idx]);
@@ -164,26 +167,10 @@ public:
     }
 };
 
-enum class DataType {
-    INT = 1, DOUBLE, STRING, COMPLEX, FUNCTION, STUDENT, TEACHER
-};
-
 void ShowTypeMenu() {
     std::cout << "Choose data type:\n"
-              << "1. int\n2. double\n3. string\n4. complex<double>\n5. function<double(double)>\n6. Student\n7. Teacher\nChoice: ";
-}
-
-std::string GetTypeString(int typeCode) {
-    switch (static_cast<DataType>(typeCode)) {
-        case DataType::INT: return "int";
-        case DataType::DOUBLE: return "double";
-        case DataType::STRING: return "string";
-        case DataType::COMPLEX: return "complex";
-        case DataType::FUNCTION: return "function<double(double)>";
-        case DataType::STUDENT: return "Student";
-        case DataType::TEACHER: return "Teacher";
-        default: return "unknown";
-    }
+              << "1. int\n2. double\n3. string\n4. complex<double>\n"
+              << "5. function<double(double)>\n6. Student\n7. Teacher\nChoice: ";
 }
 
 void RunApplication() {
@@ -196,52 +183,53 @@ void RunApplication() {
         try {
             int ch = GetInt();
             switch (ch) {
-                case 1: {
+                case 1: { // Добавление нового дерева
                     ShowTypeMenu();
                     int t = GetInt();
-                    switch (static_cast<DataType>(t)) {
-                        case DataType::INT:     trees.push_back(new TreeWrapper<int>("int")); break;
-                        case DataType::DOUBLE:  trees.push_back(new TreeWrapper<double>("double")); break;
-                        case DataType::STRING:  trees.push_back(new TreeWrapper<std::string>("string")); break;
-                        case DataType::COMPLEX: trees.push_back(new TreeWrapper<std::complex<double>>("complex")); break;
-                        case DataType::FUNCTION:trees.push_back(new TreeWrapper<std::function<double(double)>>("function")); break;
-                        case DataType::STUDENT: trees.push_back(new TreeWrapper<Student>("student")); break;
-                        case DataType::TEACHER: trees.push_back(new TreeWrapper<Teacher>("teacher")); break;
+                    switch (t) {
+                        case 1: trees.push_back(new TreeWrapper<int>("int")); break;
+                        case 2: trees.push_back(new TreeWrapper<double>("double")); break;
+                        case 3: trees.push_back(new TreeWrapper<std::string>("string")); break;
+                        case 4: trees.push_back(new TreeWrapper<std::complex<double>>("complex")); break;
+                        case 5: trees.push_back(new TreeWrapper<std::function<double(double)>>("function")); break;
+                        case 6: trees.push_back(new TreeWrapper<Student>("Student")); break;
+                        case 7: trees.push_back(new TreeWrapper<Teacher>("Teacher")); break;
                         default: throw Errors::InvalidArgument();
                     }
-                    treeTypes.push_back(std::to_string(t));
+                    treeTypes.push_back(trees.back()->TypeName());
                     std::cout << "Tree created. Index: " << trees.size() - 1 << "\n";
                     break;
                 }
-                case 2: {
+                case 2: { // Список деревьев
                     if (trees.empty()) {
                         std::cout << "No trees yet.\n";
                         break;
                     }
                     for (size_t i = 0; i < trees.size(); ++i)
-                        std::cout << i << ": Tree<" << GetTypeString(std::stoi(treeTypes[i])) << ">\n";
+                        std::cout << i << ": Tree<" << trees[i]->TypeName() << ">\n";
                     break;
                 }
-                case 3: {
+                case 3: { // Работа с деревом
                     if (trees.empty()) {
                         std::cout << "No trees yet.\n";
                         break;
                     }
+                    std::cout << "Available tree indices: ";
+                    for (size_t i = 0; i < trees.size(); ++i) std::cout << i << " ";
+                    std::cout << "\n";
                     int idx = GetInt("Tree index: ");
                     if (idx < 0 || static_cast<size_t>(idx) >= trees.size()) throw Errors::IndexOutOfRange();
-                    int t = std::stoi(treeTypes[idx]);
-                    switch (static_cast<DataType>(t)) {
-                        case DataType::INT:     static_cast<TreeWrapper<int>*>(trees[idx])->Menu(trees, treeTypes); break;
-                        case DataType::DOUBLE:  static_cast<TreeWrapper<double>*>(trees[idx])->Menu(trees, treeTypes); break;
-                        case DataType::STRING:  static_cast<TreeWrapper<std::string>*>(trees[idx])->Menu(trees, treeTypes); break;
-                        case DataType::COMPLEX: static_cast<TreeWrapper<std::complex<double>>*>(trees[idx])->Menu(trees, treeTypes); break;
-                        case DataType::FUNCTION:static_cast<TreeWrapper<std::function<double(double)>>*>(trees[idx])->Menu(trees, treeTypes); break;
-                        case DataType::STUDENT: static_cast<TreeWrapper<Student>*>(trees[idx])->Menu(trees, treeTypes); break;
-                        case DataType::TEACHER: static_cast<TreeWrapper<Teacher>*>(trees[idx])->Menu(trees, treeTypes); break;
-                    }
+                    trees[idx]->Menu(trees, treeTypes);
                     break;
                 }
-                case 4: {
+                case 4: { // Удаление дерева
+                    if (trees.empty()) {
+                        std::cout << "No trees yet.\n";
+                        break;
+                    }
+                    std::cout << "Available tree indices: ";
+                    for (size_t i = 0; i < trees.size(); ++i) std::cout << i << " ";
+                    std::cout << "\n";
                     int idx = GetInt("Index to remove: ");
                     if (idx < 0 || static_cast<size_t>(idx) >= trees.size()) throw Errors::IndexOutOfRange();
                     delete trees[idx];
@@ -250,7 +238,7 @@ void RunApplication() {
                     std::cout << "Tree deleted.\n";
                     break;
                 }
-                case 5: {
+                case 5: { // Выход
                     for (auto* ptr : trees) delete ptr;
                     std::cout << "Bye!\n";
                     return;
