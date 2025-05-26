@@ -100,12 +100,16 @@ typename BinaryTree<T>::Node* BinaryTree<T>::insert(Node* node, int key, const T
         ++size;
         return new Node(key, value);
     }
-    if (key < node->key)
+    if (key < node->key) {
         node->left = insert(node->left, key, value);
-    else if (key > node->key)
+    } else if (key > node->key) {
         node->right = insert(node->right, key, value);
+    } else {
+        node->value = value;
+    }
     return node;
 }
+
 
 template<typename T>
 void BinaryTree<T>::insert(int key, const T& value) {
