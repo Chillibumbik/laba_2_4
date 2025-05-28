@@ -40,6 +40,8 @@ private:
     bool containsSubtree(Node* root, Node* sub) const;
     Node* find(Node* node, const T& value) const;
 
+    // добавить приватный метод балансировки дерева
+
 public:
     BinaryTree();
     BinaryTree(const BinaryTree<T>& other);
@@ -71,6 +73,8 @@ public:
 
     T* findByPath(const std::string& path) const;
     T* findByRelativePath(const std::string& path, const T& from) const;
+
+    // добавить метод балансировки дерева
 };
 
 
@@ -318,6 +322,7 @@ void BinaryTree<T>::serialize(Node* node, const std::string& order, std::ostring
         out << node->value << " ";
         serialize(node->left, order, out);
         serialize(node->right, order, out);
+    // :)
     } else {
         throw Errors::UnknownOrder(order);
     }

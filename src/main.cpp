@@ -91,13 +91,13 @@ public:
             try {
                 int ch = GetInt();
                 switch (ch) {
-                    case 1: {
+                    case 1: { // insert
                         int key = GetInt("Key: ");
                         T val = GetTyped<T>("Value: ");
                         tree.insert(key, val);
                         break;
                     }
-                    case 2: {
+                    case 2: { // search
                         int key = GetInt("Key: ");
                         T* found = tree.search(key);
                         if (found) {
@@ -107,24 +107,24 @@ public:
                         } else std::cout << "Not found\n";
                         break;
                     }
-                    case 3: {
+                    case 3: { // min
                         if constexpr (std::is_same_v<T, std::function<double(double)>>)
                             std::cout << "Min: f(1.0) = " << tree.getMin()(1.0) << "\n";
                         else std::cout << "Min: " << tree.getMin() << "\n";
                         break;
                     }
-                    case 4: {
+                    case 4: { // max
                         if constexpr (std::is_same_v<T, std::function<double(double)>>)
                             std::cout << "Max: f(1.0) = " << tree.getMax()(1.0) << "\n";
                         else std::cout << "Max: " << tree.getMax() << "\n";
                         break;
                     }
-                    case 5: {
+                    case 5: { // remove
                         int key = GetInt("Key: ");
                         std::cout << (tree.remove(key) ? "Removed.\n" : "Key not found.\n");
                         break;
                     }
-                    case 6: {
+                    case 6: { // travarse klp
                         std::cout << "KLP traversal:\n";
                         if constexpr (std::is_same_v<T, std::function<double(double)>>)
                             tree.traverseKLP([](const T& f) { std::cout << "f(1.0)=" << f(1.0) << " "; });
@@ -132,7 +132,7 @@ public:
                         std::cout << "\n";
                         break;
                     }
-                    case 7: {
+                    case 7: { // merge
                         std::cout << "Available tree indices: ";
                         for (size_t i = 0; i < globalTrees.size(); ++i)
                             std::cout << i << " ";
@@ -148,7 +148,7 @@ public:
                         std::cout << "Merged tree added as index " << globalTrees.size() - 1 << "\n";
                         break;
                     }
-                    case 8: {
+                    case 8: { // subtree
                         int key = GetInt("Key for subtree root: ");
                         auto* subtree = new TreeWrapper<T>("subtree_" + typeName);
                         subtree->tree = this->tree.extractSubtree(key);
@@ -157,7 +157,7 @@ public:
                         std::cout << "Subtree added as index " << globalTrees.size() - 1 << "\n";
                         break;
                     }
-                    case 9: return;
+                    case 9: return; //back
                     default: std::cout << "Invalid option.\n";
                 }
             } catch (const std::exception& e) {

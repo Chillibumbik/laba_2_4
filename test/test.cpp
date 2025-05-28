@@ -158,7 +158,7 @@ TEST_CASE("BinaryTree: Deep Merge and Extract") {
 TEST_CASE("BinaryTree: Overwrite value with same key") {
     BinaryTree<int> tree;
     tree.insert(1, 100);
-    tree.insert(1, 200); // overwrite
+    tree.insert(1, 200); 
     REQUIRE(*tree.search(1) == 200);
 }
 
@@ -212,16 +212,16 @@ TEST_CASE("BinaryTree: Manual traversal check") {
     });
 
     REQUIRE(visited.size() == 3);
-    REQUIRE(visited[0] == 100); // root
-    REQUIRE(visited[1] == 50);  // left
-    REQUIRE(visited[2] == 150); // right
+    REQUIRE(visited[0] == 100); // к
+    REQUIRE(visited[1] == 50);  // л
+    REQUIRE(visited[2] == 150); // п
 }  
 
 void benchmark_binary_tree(const std::string& filename) {
     std::ofstream file(filename);
     file << "N,InsertTimeMs,SearchTimeMs\n";
 
-    for (int exp = 4; exp <= 6; ++exp) {  // максимум до 10^6
+    for (int exp = 1; exp <= 7; ++exp) { 
         size_t N = static_cast<size_t>(std::pow(10, exp));
 
         BinaryTree<int> tree;
@@ -231,7 +231,7 @@ void benchmark_binary_tree(const std::string& filename) {
         std::iota(keys.begin(), keys.end(), 0);
         std::shuffle(keys.begin(), keys.end(), std::mt19937{std::random_device{}()});
 
-        // Measure insert time
+        // вставка
         auto t1 = std::chrono::high_resolution_clock::now();
         for (int key : keys) {
             tree.insert(key, key);
@@ -239,7 +239,7 @@ void benchmark_binary_tree(const std::string& filename) {
         auto t2 = std::chrono::high_resolution_clock::now();
         double insert_time = std::chrono::duration<double, std::milli>(t2 - t1).count();
 
-        // Measure search time
+        // поиск
         t1 = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < std::min(N, size_t(1000)); ++i) {
             tree.search(keys[i]);
