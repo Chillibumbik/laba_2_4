@@ -15,7 +15,7 @@ private:
         Node* left;
         Node* right;
 
-        Node(int k, const T& v) : key(k), value(v), left(nullptr), right(nullptr) {}
+        Node(int k, const T& v) : key(k), value(v), left(nullptr), right(nullptr) {} 
     };
 
     Node* root;
@@ -39,6 +39,11 @@ private:
     bool equals(Node* a, Node* b) const;
     bool containsSubtree(Node* root, Node* sub) const;
     Node* find(Node* node, const T& value) const;
+
+    Node* buildBalancedTree(const std::vector<std::pair<int, T>>& nodes, int start, int end);
+    void inOrderCollect(Node* node, std::vector<std::pair<int, T>>& out) const;
+
+    int getDepth(Node* node) const;
 
     // добавить приватный метод балансировки дерева
 
@@ -73,6 +78,10 @@ public:
 
     T* findByPath(const std::string& path) const;
     T* findByRelativePath(const std::string& path, const T& from) const;
+
+    void balance();
+    int GetDepth() const;
+
 
     // добавить метод балансировки дерева
 };
@@ -379,4 +388,41 @@ T* BinaryTree<T>::findByRelativePath(const std::string& path, const T& from) con
         else throw Errors::InvalidPath();
     }
     return node ? &node->value : nullptr;
+}
+
+template<typename T>
+BinaryTree<T>::Node* BinaryTree<T>::buildBalancedTree(const std::vector<std::pair<int, T>>& nodes, int start, int end) {
+    if (start > end) return nullptr;
+    int mid = (start + end) / 2;
+    Node* node = new Node(nodes[mid].first, nodes[mid].second);
+    node->left = buildBalancedTree(nodes, start, mid - 1);
+    node->right = buildBalancedTree(nodes, mid + 1, end);
+    return node;
+}
+
+template<typename T>
+void BinaryTree<T>::inOrderCollect(Node* node, std::vector<std::pair<int, T>>& out) const {
+    if (!node) return;
+    inOrderCollect(node->left, out);
+    out.push_back({node->key, node->value});
+    inOrderCollect(node->right, out);
+}
+
+template<typename T>
+void BinaryTree<T>::balance() {
+    std::vector<std::pair<int, T>> nodes;
+    inOrderCollect(root, nodes);
+    destroy(root);
+    root = buildBalancedTree(nodes, 0, nodes.size() - 1);
+}
+
+template<typename T>
+int BinaryTree<T>::getDepth(Node* node) const {
+    if (!node) return 0;
+    return 1 + std::max(getDepth(node->left), getDepth(node->right));
+}
+
+template<typename T>
+int BinaryTree<T>::GetDepth() const {
+    return getDepth(root);
 }

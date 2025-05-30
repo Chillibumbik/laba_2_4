@@ -217,6 +217,31 @@ TEST_CASE("BinaryTree: Manual traversal check") {
     REQUIRE(visited[2] == 150); // п
 }  
 
+TEST_CASE("BinaryTree: Balance reduces tree depth") {
+    BinaryTree<int> tree;
+
+    // перекошено вправо
+    for (int i = 1; i <= 7; ++i) {
+        tree.insert(i, i * 10);
+    }
+
+    int depthBefore = tree.GetDepth();
+    REQUIRE(depthBefore == 7); 
+
+    tree.balance();
+
+    int depthAfter = tree.GetDepth();
+    REQUIRE(depthAfter < depthBefore);
+    REQUIRE(depthAfter <= 3); // log2(7+1) = 3
+
+    // Данные остались
+    for (int i = 1; i <= 7; ++i) {
+        REQUIRE(*tree.search(i) == i * 10);
+    }
+}
+
+
+
 void benchmark_binary_tree(const std::string& filename) {
     std::ofstream file(filename);
     file << "N,InsertTimeMs,SearchTimeMs\n";
