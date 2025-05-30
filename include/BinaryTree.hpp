@@ -82,6 +82,7 @@ public:
     void balance();
     int GetDepth() const;
 
+    BinaryTree<T>& operator=(const BinaryTree<T>& other);
 
     // добавить метод балансировки дерева
 };
@@ -391,7 +392,7 @@ T* BinaryTree<T>::findByRelativePath(const std::string& path, const T& from) con
 }
 
 template<typename T>
-BinaryTree<T>::Node* BinaryTree<T>::buildBalancedTree(const std::vector<std::pair<int, T>>& nodes, int start, int end) {
+typename BinaryTree<T>::Node* BinaryTree<T>::buildBalancedTree(const std::vector<std::pair<int, T>>& nodes, int start, int end) {
     if (start > end) return nullptr;
     int mid = (start + end) / 2;
     Node* node = new Node(nodes[mid].first, nodes[mid].second);
@@ -425,4 +426,14 @@ int BinaryTree<T>::getDepth(Node* node) const {
 template<typename T>
 int BinaryTree<T>::GetDepth() const {
     return getDepth(root);
+}
+    
+template<typename T>
+BinaryTree<T>& BinaryTree<T>::operator=(const BinaryTree<T>& other) {
+    if (this != &other) {
+        destroy(root);
+        root = copy(other.root);
+        size = other.size;
+    }
+    return *this;
 }

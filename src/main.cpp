@@ -86,7 +86,8 @@ public:
         while (true) {
             std::cout << "\n--- Tree Menu (" << typeName << ") ---\n"
                       << "1. Insert\n2. Search\n3. Min\n4. Max\n5. Remove\n"
-                      << "6. Traverse (KLP)\n7. Merge with another\n8. Extract Subtree\n9. Back\n"
+                      << "6. Traverse (KLP)\n7. Merge with another\n8. Extract Subtree\n"
+                      << "9. Balance Tree\n10. Back\n"
                       << "Choose: ";
             try {
                 int ch = GetInt();
@@ -157,7 +158,13 @@ public:
                         std::cout << "Subtree added as index " << globalTrees.size() - 1 << "\n";
                         break;
                     }
-                    case 9: return; //back
+                    case 9: {
+                        tree.balance();
+                        std::cout << "Tree balanced.\n";
+                        break;
+                    }
+                    case 10: return;
+
                     default: std::cout << "Invalid option.\n";
                 }
             } catch (const std::exception& e) {
