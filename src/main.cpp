@@ -7,6 +7,22 @@
 #include "BinaryTree.hpp"
 #include "Users.hpp"
 #include "Errors.hpp"
+#include <random>
+
+BinaryTree<int> RandomTree(int nodes, int depth) {
+    BinaryTree<int> rand_tree;
+
+    std::vector<int> keys(static_cast<size_t>(nodes));
+    std::iota(keys.begin(), keys.end(), 0);
+    std::shuffle(keys.begin(), keys.end(), std::mt19937{std::random_device{}()});
+
+    for (int key : keys) {
+        rand_tree.insert(key, key);
+        if (rand_tree.GetDepth() > depth){
+            rand_tree.balance();
+        }
+    }
+}
 
 void ClearInput() {
     std::cin.clear();
@@ -262,3 +278,17 @@ int main() {
     RunApplication();
     return 0;
 }
+//main пустой
+//BinaryTree.hpp 262 - что тут происходит?
+//Добавить в main методы представления дерева в виде строки и дерева из строки
+//в мееню работаетм только со значением (ключ = значение)(для инта)
+//добавить функцию генерации случайного дерева по заданной высоте и кол-ву узлов, которые будут случайным образом раскиданы по дереву
+//вывод дерева в виде дерева (чтобы можно было посмотреть как оно выглядит) // обьявил в BinaryTree.hpp
+//BinaryTree.hpp 398 - что за конструктор для ноды? что такое first и second? возможно, стоит придумать название получше
+//объяснить подробнее, как работает балансировка
+//  ДОП ЗАДАНИЕ:
+//метод построения из дерева строки вида: {(left)root(right)}
+//метод построения строки из дерева
+//проверка, что такая строка является корректной (что это в прицнипе является деревом)
+//покрыть эти два алгоритма тестами (тут нужны качественные тесты, т.к. алгоритм непростой)
+

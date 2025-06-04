@@ -84,7 +84,7 @@ public:
 
     BinaryTree<T>& operator=(const BinaryTree<T>& other);
 
-    // добавить метод балансировки дерева
+    void PrintTree(); // Реализовать красивый вывод дерева    
 };
 
 
@@ -437,3 +437,6 @@ BinaryTree<T>& BinaryTree<T>::operator=(const BinaryTree<T>& other) {
     }
     return *this;
 }
+
+template<typename T>
+void BinaryTree<T>::PrintTree(){}
