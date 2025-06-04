@@ -251,7 +251,7 @@ void benchmark_binary_tree(const std::string& filename) {
 
         BinaryTree<int> tree;
 
-        // сгенерировать ключи и перемешать
+        // генерация и шафл
         std::vector<int> keys(N);
         std::iota(keys.begin(), keys.end(), 0);
         std::shuffle(keys.begin(), keys.end(), std::mt19937{std::random_device{}()});
