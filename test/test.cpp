@@ -282,3 +282,24 @@ TEST_CASE("Benchmark: BinaryTree performance", "[Benchmark]") {
     benchmark_binary_tree("benchmark_results.csv");
     REQUIRE(true);
 }
+
+TEST_CASE("BinaryTree: serialize and deserialize") {
+    BinaryTree<int> tree;
+    tree.insert(20, 20);
+    tree.insert(10, 10);
+    tree.insert(30, 30);
+
+    std::string serialized = tree.toString();
+
+
+    REQUIRE(tree.isValidTreeString(serialized));
+
+
+    BinaryTree<int> new_tree = BinaryTree<int>::fromString(serialized);
+    REQUIRE(new_tree == tree);
+
+
+    std::string invalid_bst = "((()25:25())20:20(()30:30()))"; // 25 > 20  ошибка
+    BinaryTree<int> tmp_tree;
+    REQUIRE_FALSE(tmp_tree.isValidTreeString(invalid_bst));
+}

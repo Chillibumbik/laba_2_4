@@ -19,8 +19,8 @@ enum class ErrorCode {
     DESERIALIZE_FAILED,
     INDEX_OUT_OF_RANGE,
     INVALID_ARGUMENT,
-    CONCAT_ERROR
-
+    CONCAT_ERROR,
+    PARSE_ERROR
 };
 
 inline std::vector<Error> ErrorsList = {
@@ -32,7 +32,8 @@ inline std::vector<Error> ErrorsList = {
     {5, "Failed to deserialize tree from string"},
     {6, "Index out of range"},
     {7, "Invalid argument"},
-    {8, "Cannot merge trees of different types"}
+    {8, "Cannot merge trees of different types"},
+    {9, "Parse error. Format is incorrect(correct format: (())key:value(())"}
 };
 
 namespace Errors {
@@ -94,5 +95,12 @@ namespace Errors {
 
     inline std::invalid_argument ConcatTypeMismatchError(){
         return std::invalid_argument(ErrorsList[static_cast<int>(ErrorCode::CONCAT_ERROR)].message);
+    }
+
+    inline std::logic_error ParseError(const std::string& message = "") {
+    if (message.empty())
+        return std::logic_error(ErrorsList[static_cast<int>(ErrorCode::PARSE_ERROR)].message);
+    else
+        return std::logic_error(ErrorsList[static_cast<int>(ErrorCode::PARSE_ERROR)].message + ": " + message);
     }
 }

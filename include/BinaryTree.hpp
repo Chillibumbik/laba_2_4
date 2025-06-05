@@ -34,8 +34,9 @@ private:
     void traverse(std::function<void(int, const T&)> func) const;
     void traverse(Node* node, std::function<void(int, const T&)> func) const;
 
-    void serialize(Node* node, const std::string& order, std::ostringstream& out) const;
-    Node* deserialize(std::istringstream& in, const std::string& order);
+    std::string serializeNode(Node* node) const;
+    static Node* parseNode(const std::string& s, size_t& pos);
+
 
     bool equals(Node* a, Node* b) const;
     bool containsSubtree(Node* root, Node* sub) const;
@@ -47,6 +48,9 @@ private:
     int getDepth(Node* node) const;
 
     void printNode(Node* node, int indent) const;
+
+    bool isValidBST(Node* node, const int* minKey, const int* maxKey) const;
+
 
     // добавить приватный метод балансировки дерева
 
@@ -76,8 +80,9 @@ public:
     bool containsSubtree(const BinaryTree<T>& sub) const;
     bool containsNode(const T& value) const;
 
-    std::string toString(const std::string& order) const;
-    static BinaryTree<T> fromString(const std::string& str, const std::string& order);
+    std::string toString() const;
+    static BinaryTree<T> fromString(const std::string& str);
+    bool isValidTreeString(const std::string& s);
 
     T* findByPath(const std::string& path) const;
     T* findByRelativePath(const std::string& path, const T& from) const;
@@ -88,6 +93,10 @@ public:
     BinaryTree<T>& operator=(const BinaryTree<T>& other);
 
     void PrintTree() const;
+
+    bool operator==(const BinaryTree<T>& other) const;
+    bool operator!=(const BinaryTree<T>& other) const;
+
 };
 
 
@@ -327,48 +336,121 @@ typename BinaryTree<T>::Node* BinaryTree<T>::find(Node* node, const T& value) co
 }
 
 template<typename T>
-void BinaryTree<T>::serialize(Node* node, const std::string& order, std::ostringstream& out) const {
-    if (!node) {
-        out << "# ";
-        return;
-    }
-    if (order == "KLP") {
-        out << node->value << " ";
-        serialize(node->left, order, out);
-        serialize(node->right, order, out);
-    // :)
-    } else {
-        throw Errors::UnknownOrder(order);
-    }
+std::string BinaryTree<T>::toString() const {
+    return serializeNode(root);
 }
 
 template<typename T>
-std::string BinaryTree<T>::toString(const std::string& order) const {
+std::string BinaryTree<T>::serializeNode(Node* node) const {
+    if (!node) return "()"; // Пустое поддерево
+
     std::ostringstream out;
-    serialize(root, order, out);
+    out << "("; // откр
+    out << serializeNode(node->left); // лево
+
+    // Печатаем key и value
+    out << node->key << ":";
+    if constexpr (std::is_same_v<T, std::function<double(double)>>) {
+        out << "<function>";
+    } else {
+        out << node->value;
+    }
+
+    out << serializeNode(node->right); // право
+    out << ")"; // закр
+
     return out.str();
 }
 
 template<typename T>
-BinaryTree<T> BinaryTree<T>::fromString(const std::string& str, const std::string& order) {
-    std::istringstream in(str);
-    BinaryTree<T> result;
-    result.root = result.deserialize(in, order);
-    return result;
+bool BinaryTree<T>::isValidTreeString(const std::string& s) {
+    size_t pos = 0;
+    try {
+        Node* node = parseNode(s, pos);
+        if (pos != s.size()) throw Errors::ParseError(); // не всё прочитано
+
+        bool valid = isValidBST(node, nullptr, nullptr);
+        destroy(node); // очищаем временное дерево
+
+        return valid;
+    } catch (...) {
+        return false;
+    }
 }
 
 template<typename T>
-typename BinaryTree<T>::Node* BinaryTree<T>::deserialize(std::istringstream& in, const std::string& order) {
-    std::string val;
-    in >> val;
-    if (val == "#" || val.empty()) return nullptr;
+bool BinaryTree<T>::isValidBST(Node* node, const int* minKey, const int* maxKey) const {
+    if (!node) return true;
+
+    if ((minKey && node->key <= *minKey) || (maxKey && node->key >= *maxKey))
+        return false;
+
+    return isValidBST(node->left, minKey, &node->key) &&
+           isValidBST(node->right, &node->key, maxKey);
+}
+
+
+
+template<typename T>
+BinaryTree<T> BinaryTree<T>::fromString(const std::string& str) {
+    size_t pos = 0;
+    BinaryTree<T> tree;
+
+    if (!tree.isValidTreeString(str)) {
+        throw Errors::ParseError("Invalid tree string: structure or BST property violated.");
+    }
+
+    tree.root = tree.parseNode(str, pos);
+    return tree;
+}
+
+
+template<typename T>
+typename BinaryTree<T>::Node* BinaryTree<T>::parseNode(const std::string& s, size_t& pos) {
+/* 
+(())5:5(())6:6()))
+(())5:5()))
+*/
+    if (pos >= s.size() || s[pos] != '(') throw Errors::ParseError();
+    ++pos;                           // пропустили '('
+
+    // пустое поддерево 
+    if (s[pos] == ')') { ++pos; return nullptr; }
+
+    //  левое 
+    Node* left = parseNode(s, pos);
+
+    // key 
+    std::string key_str;
+    while (pos < s.size() && std::isdigit(s[pos]))
+        key_str += s[pos++];
+    if (key_str.empty() || s[pos++] != ':')
+        throw Errors::ParseError();
+    int key = std::stoi(key_str);
+
+    //  value 
+    std::string val_str;
+    while (pos < s.size() && s[pos] != '(' && s[pos] != ')')
+        val_str += s[pos++];
+    std::istringstream vs(val_str);
     T value;
-    std::istringstream(val) >> value;
-    Node* node = new Node(0, value);
-    node->left = deserialize(in, order);
-    node->right = deserialize(in, order);
+    vs >> value;
+
+    // правое 
+    Node* right = parseNode(s, pos);
+
+    // закрывающая
+    if (pos >= s.size() || s[pos] != ')') throw Errors::ParseError();
+    ++pos;
+
+    // собираем 
+    Node* node = new Node(key, value);
+    node->left  = left;
+    node->right = right;
     return node;
 }
+
+
 
 template<typename T>
 T* BinaryTree<T>::findByPath(const std::string& path) const {
@@ -465,4 +547,15 @@ void BinaryTree<T>::printNode(Node* node, int indent) const {
 
         if (node->left) printNode(node->left, indent + 5);
     }
+}
+
+
+template<typename T>
+bool BinaryTree<T>::operator==(const BinaryTree<T>& other) const {
+    return equals(this->root, other.root);
+}
+
+template<typename T>
+bool BinaryTree<T>::operator!=(const BinaryTree<T>& other) const {
+    return !(*this == other);
 }
