@@ -8,23 +8,34 @@
 #include "Users.hpp"
 #include "Errors.hpp"
 #include <random>
+#include <unordered_set>
 
 BinaryTree<int> RandomTree(int nodes, int depth) {
-    BinaryTree<int> rand_tree;
+    if (nodes > 1001)
+        throw std::runtime_error("Too many nodes: can't generate more than 1001 unique keys in range [0, 1000]");
 
-    std::vector<int> keys(static_cast<size_t>(nodes));
-    std::iota(keys.begin(), keys.end(), 0);
-    std::shuffle(keys.begin(), keys.end(), std::mt19937{std::random_device{}()});
+    BinaryTree<int> rand_tree;
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> dist(0, 1000);
+    std::unordered_set<int> unique_keys;
+
+    while (static_cast<int>(unique_keys.size()) < nodes) {
+        unique_keys.insert(dist(rng));
+    }
+
+    std::vector<int> keys(unique_keys.begin(), unique_keys.end());
+    std::shuffle(keys.begin(), keys.end(), rng);
 
     for (int key : keys) {
         rand_tree.insert(key, key);
-        if (rand_tree.GetDepth() > depth){
+        if (rand_tree.GetDepth() > depth) {
             rand_tree.balance();
         }
     }
 
     return rand_tree;
 }
+
 
 void ClearInput() {
     std::cin.clear();
@@ -216,7 +227,7 @@ void RunApplication() {
 
     while (true) {
         std::cout << "\n=== Main Menu ===\n"
-                  << "1. Add Tree\n2. List Trees\n3. Work With Tree\n4. Delete Tree\n5. Exit\nChoose: ";
+                  << "1. Add Tree\n2. List Trees\n3. Work With Tree\n4. Delete Tree\n5. Random tree \n6. Exit\nChoose: ";
         try {
             int ch = GetInt();
             switch (ch) {
@@ -275,7 +286,20 @@ void RunApplication() {
                     std::cout << "Tree deleted.\n";
                     break;
                 }
-                case 5: { // Выход
+                case 5: { // генерация случайного дерева
+                    int nodes = GetInt("Number of nodes: ");
+                    int depth = GetInt("Max depth: ");
+                    if (nodes <= 0 || depth <= 0) throw Errors::InvalidArgument("Nodes and depth must be positive.");
+                    BinaryTree<int> rand_tree = RandomTree(nodes, depth);
+                    auto* wrapper = new TreeWrapper<int>("RandomTree");
+                    wrapper->tree = std::move(rand_tree);
+                    trees.push_back(wrapper);
+                    treeTypes.push_back("int");
+                    std::cout << "Random tree created with " << nodes << " nodes and max depth " << depth << ".\n";
+                    std::cout << "Random tree added as index " << trees.size() - 1 << "\n";
+                    break;
+                } 
+                case 6: { // Выход
                     for (auto* ptr : trees) delete ptr;
                     std::cout << "Bye!\n";
                     return;
@@ -297,7 +321,7 @@ int main() {
 //Добавить в main методы представления дерева в виде строки и дерева из строки
 //в мееню работаетм только со значением (ключ = значение)(для инта) ---ВЫПОЛНЕНО---
 //добавить функцию генерации случайного дерева по заданной высоте и кол-ву узлов, которые будут случайным образом раскиданы по дереву
-//вывод дерева в виде дерева (чтобы можно было посмотреть как оно выглядит) // обьявил в BinaryTree.hpp
+//вывод дерева в виде дерева (чтобы можно было посмотреть как оно выглядит) // обьявил в BinaryTree.hpp ---ВЫПОЛНЕНО---
 //BinaryTree.hpp 398 - что за конструктор для ноды? что такое first и second? возможно, стоит придумать название получше ---ВЫПОЛНЕНО---
 //объяснить подробнее, как работает балансировка ---ВЫПОЛНЕНО---
 //  ДОП ЗАДАНИЕ:
