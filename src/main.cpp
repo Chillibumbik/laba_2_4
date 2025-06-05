@@ -22,6 +22,8 @@ BinaryTree<int> RandomTree(int nodes, int depth) {
             rand_tree.balance();
         }
     }
+
+    return rand_tree;
 }
 
 void ClearInput() {
@@ -103,14 +105,20 @@ public:
             std::cout << "\n--- Tree Menu (" << typeName << ") ---\n"
                       << "1. Insert\n2. Search\n3. Min\n4. Max\n5. Remove\n"
                       << "6. Traverse (KLP)\n7. Merge with another\n8. Extract Subtree\n"
-                      << "9. Balance Tree\n10. Back\n"
+                      << "9. Balance Tree\n10. Print tree \n11. Back\n"
                       << "Choose: ";
             try {
                 int ch = GetInt();
                 switch (ch) {
                     case 1: { // insert
-                        int key = GetInt("Key: ");
+                        //int key = GetInt("Key: ");
+                        int key;
                         T val = GetTyped<T>("Value: ");
+                        if constexpr (std::is_same_v<T, int>) {
+                                key = val;
+                            } else {
+                                key = GetInt("Key: ");
+                            }
                         tree.insert(key, val);
                         break;
                     }
@@ -179,7 +187,13 @@ public:
                         std::cout << "Tree balanced.\n";
                         break;
                     }
-                    case 10: return;
+                    case 10:{ // print
+                        if constexpr (std::is_same_v<T, std::function<double(double)>>)
+                        tree.traverseKLP([](const T& f) { std::cout << "f(1.0)=" << f(1.0) << " "; });
+                        else {tree.PrintTree();}
+                        break;
+                    }
+                    case 11: return;
 
                     default: std::cout << "Invalid option.\n";
                 }
@@ -279,13 +293,13 @@ int main() {
     return 0;
 }
 //main пустой
-//BinaryTree.hpp 262 - что тут происходит?
+//BinaryTree.hpp 262 - что тут происходит? ---ВЫПОЛНЕНО---
 //Добавить в main методы представления дерева в виде строки и дерева из строки
-//в мееню работаетм только со значением (ключ = значение)(для инта)
+//в мееню работаетм только со значением (ключ = значение)(для инта) ---ВЫПОЛНЕНО---
 //добавить функцию генерации случайного дерева по заданной высоте и кол-ву узлов, которые будут случайным образом раскиданы по дереву
 //вывод дерева в виде дерева (чтобы можно было посмотреть как оно выглядит) // обьявил в BinaryTree.hpp
-//BinaryTree.hpp 398 - что за конструктор для ноды? что такое first и second? возможно, стоит придумать название получше
-//объяснить подробнее, как работает балансировка
+//BinaryTree.hpp 398 - что за конструктор для ноды? что такое first и second? возможно, стоит придумать название получше ---ВЫПОЛНЕНО---
+//объяснить подробнее, как работает балансировка ---ВЫПОЛНЕНО---
 //  ДОП ЗАДАНИЕ:
 //метод построения из дерева строки вида: {(left)root(right)}
 //метод построения строки из дерева

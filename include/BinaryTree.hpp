@@ -5,6 +5,7 @@
 #include <functional>
 #include <stdexcept>
 #include "Errors.hpp"
+#include <iomanip>
 
 template<typename T>
 class BinaryTree {
@@ -45,6 +46,8 @@ private:
 
     int getDepth(Node* node) const;
 
+    void printNode(Node* node, int indent) const;
+
     // добавить приватный метод балансировки дерева
 
 public:
@@ -84,7 +87,7 @@ public:
 
     BinaryTree<T>& operator=(const BinaryTree<T>& other);
 
-    void PrintTree(); // Реализовать красивый вывод дерева    
+    void PrintTree() const;
 };
 
 
@@ -259,12 +262,13 @@ BinaryTree<T> BinaryTree<T>::where(std::function<bool(const T&)> p) const {
 template<typename T>
 BinaryTree<T> BinaryTree<T>::merge(const BinaryTree<T>& other) const {
     BinaryTree<T> result;
-    traverse([&result](int key, const T& val) {
+    traverse([&result](int key, const T& val) { // обходим по первому дереву(нет прямого доступа к ключу, поэтому используем traverse)
         result.insert(key, val);
     });
-    other.traverse([&result](int key, const T& val) {
+    other.traverse([&result](int key, const T& val) { // обходим по второму дереву
         result.insert(key, val);
     });
+    result.balance(); // балансируем после слияния
     return result;
 }
 
@@ -394,27 +398,28 @@ T* BinaryTree<T>::findByRelativePath(const std::string& path, const T& from) con
 template<typename T>
 typename BinaryTree<T>::Node* BinaryTree<T>::buildBalancedTree(const std::vector<std::pair<int, T>>& nodes, int start, int end) {
     if (start > end) return nullptr;
-    int mid = (start + end) / 2;
-    Node* node = new Node(nodes[mid].first, nodes[mid].second);
-    node->left = buildBalancedTree(nodes, start, mid - 1);
-    node->right = buildBalancedTree(nodes, mid + 1, end);
-    return node;
+    int mid = (start + end) / 2; // среднее м-у стартом и концом
+    Node* node = new Node(nodes[mid].first, nodes[mid].second); // берется из словаря nodes средний нод и его ключ(first) и значение (second), которые потом в новый нод идут
+    node->left = buildBalancedTree(nodes, start, mid - 1); // рекурсивно создаем узел для середины слева
+    node->right = buildBalancedTree(nodes, mid + 1, end); // рекурсивно создаем для середины справа
+    return node; // возвращаем узел тогда, когда у нас  не осталось возможных потомков (старт > енд)
 }
 
 template<typename T>
 void BinaryTree<T>::inOrderCollect(Node* node, std::vector<std::pair<int, T>>& out) const {
-    if (!node) return;
-    inOrderCollect(node->left, out);
-    out.push_back({node->key, node->value});
+    if (!node) return; // если нет нода
+    inOrderCollect(node->left, out); 
+    out.push_back({node->key, node->value}); // закидываем в словарь пару {ключ, значение}
     inOrderCollect(node->right, out);
+    //рекурсивно делаем для левой и правой части(ин ордер)
 }
 
 template<typename T>
 void BinaryTree<T>::balance() {
-    std::vector<std::pair<int, T>> nodes;
-    inOrderCollect(root, nodes);
-    destroy(root);
-    root = buildBalancedTree(nodes, 0, nodes.size() - 1);
+    std::vector<std::pair<int, T>> nodes; // словарь узлов
+    inOrderCollect(root, nodes); // закидываем все узлы по KLP в словарь
+    destroy(root); // уничтожаем дерево(несбалансированное)
+    root = buildBalancedTree(nodes, 0, nodes.size() - 1); // новый корень для дерева(сбалансированное)
 }
 
 template<typename T>
@@ -439,4 +444,25 @@ BinaryTree<T>& BinaryTree<T>::operator=(const BinaryTree<T>& other) {
 }
 
 template<typename T>
-void BinaryTree<T>::PrintTree(){}
+void BinaryTree<T>::PrintTree() const {
+    printNode(root, 0);
+}
+
+template<typename T>
+void BinaryTree<T>::printNode(Node* node, int indent) const {
+    if (node) {
+        if (node->right) printNode(node->right, indent + 5);
+        
+        if (indent) std::cout << std::setw(indent) << ' ';
+        
+        std::cout << node->key << ": ";
+        
+        if constexpr (std::is_same_v<T, std::function<double(double)>>) {
+            std::cout << "<function>" << std::endl;
+        } else {
+            std::cout << node->value << std::endl;
+        }
+
+        if (node->left) printNode(node->left, indent + 5);
+    }
+}
